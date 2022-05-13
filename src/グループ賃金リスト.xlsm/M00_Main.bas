@@ -8,6 +8,7 @@ Option Explicit
 '2011/08/31 更新 : takazawa
 '2013/01/29 更新 ：takazawa
 '2021/03/04 更新 ：takazawa
+'2022/05/13 更新 ：takazawa Git登録
 
 Public Const dbK = "\\192.168.128.4\hb\KYUYO\グループ賃金.accdb"
 Public Const dbT = "\\192.168.128.4\hb\ta\給与システム\グループ賃金.accdb"

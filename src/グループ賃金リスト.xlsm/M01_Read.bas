@@ -2,36 +2,38 @@ Attribute VB_Name = "M01_Read"
 Option Explicit
 
 Sub Select_STN()
+
+'=======================================
+'メニュー画面で事業所を選択した時の処理
+'=======================================
     
-    Sheets("List").Select
+    Sheets("List").Select 'Listシートへ移動
     Range("B3").Select
     
-    Call Get_Data
+    Call Get_Data 'データ読み込み
     
 End Sub
 
 Sub Get_Data()
 
-Dim strSTN As String
-Dim strSNM As String
+'=======================================
+'賃金データ読み込み
+'=======================================
 
-    strSTN = Sheets("Menu").Range("AI5")
+    Dim strSTN As String
+
+    strSTN = Sheets("Menu").Range("AI5") '拠点区分取得(RH,RO,RT,TA,KA)
      
-    Call 社員読込(strSTN)
+    Call 賃金読込(strSTN)
     
 End Sub
 
 
-Sub 社員読込(strKBN As String)
-
-Const SQL1 = "SELECT * FROM グループ社員マスター WHERE (((事業所区分)='"
-Const SQL2 = "')) ORDER BY 等級 DESC, 社員種類, 社員コード"
-Const SQL2T = "')) ORDER BY 等級 DESC, 号数 DESC, 社員コード"
+Sub 賃金読込(strKBN As String)
 
 Dim cnA    As New ADODB.Connection
 Dim rsA    As New ADODB.Recordset
 Dim Cmd    As New ADODB.Command
-
 Dim strSQL As String
 Dim strUNM As String
 Dim strDB  As String
@@ -39,8 +41,10 @@ Dim lngR   As Long
 Dim lngC   As Long
 Dim P_Hant As String
     
+    'ユーザ名が給与管理者の場合のみ処理する
     strUNM = Strings.UCase(GetUserNameString)
     If strUNM = "SCOTT" Or strUNM = "TAKA" Or strUNM = "SIMO" Then
+        '工場分は別DBｾｯﾄ
         If strKBN = "TA" Or strKBN = "KA" Then
             strDB = dbT
         Else
@@ -57,10 +61,17 @@ Dim P_Hant As String
     '社員分処理
     Call CLR_CELL          'ﾃﾞｰﾀｼｰﾄｸﾘｱ
         
-    strSQL = SQL1 & strKBN & SQL2
+    strSQL = strSQL & "SELECT *"
+    strSQL = strSQL & "     FROM グループ社員マスター"
+    strSQL = strSQL & "        WHERE 事業所区分 ='" & strKBN & "'"
+    strSQL = strSQL & "     ORDER BY 等級 DESC,"
+    strSQL = strSQL & "              号数 DESC,"
+    strSQL = strSQL & "              社員種類,"
+    strSQL = strSQL & "              社員コード"
     Cmd.CommandText = strSQL
     Set rsA = Cmd.Execute
     If rsA.EOF = False Then rsA.MoveFirst
+    'ｼｰﾄにﾃﾞｰﾀ貼り付け
     lngR = 7
     Do Until rsA.EOF
         If Trim(rsA![管理職区] & "") <> "役員" Then '一般社員
@@ -98,15 +109,8 @@ Dim P_Hant As String
        
     Range("A2").Select
 
-    '接続のクローズ
-    rsA.Close
-    cnA.Close
-
 Exit_DB:
 
-    'オブジェクトの破棄
-    Set rsA = Nothing
-    Set cnA = Nothing
     If Not rsA Is Nothing Then
         If rsA.State = adStateOpen Then rsA.Close
         Set rsA = Nothing
