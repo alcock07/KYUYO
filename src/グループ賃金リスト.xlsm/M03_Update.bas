@@ -12,134 +12,120 @@ Const SQL5 = ") AND ((号数)="
 
 Dim cnA      As New ADODB.Connection
 Dim rsA      As New ADODB.Recordset
+Dim Cmd      As New ADODB.Command
 Dim rsT      As New ADODB.Recordset
 Dim strSQL   As String
-Dim strUNM   As String
-Dim strKBN   As String
-Dim strDB    As String
+Dim strNT    As String
 Dim lngR     As Long   '行ｶｳﾝﾀ
 Dim lngC     As Long   '列ｶｳﾝﾀ
 Dim strKey1  As String '事業所区分
 Dim strKey2  As String '社員コード
 Dim strDel   As String '削除ｷｰ
-Dim strDAT1  As String '生年月日
-Dim strDAT2  As String '入社年月日
-Dim DateS    As Date   '生年月日2
-Dim DateN    As Date   '入社年月日2
-Dim DateA    As Date   '作業用変数
-Dim lngTKY   As Long
-Dim lngGSU   As Long
-
-    strKBN = Sheets("Menu").Range("AI5")
+Dim lngTKY   As Long   '等級
+Dim lngGSU   As Long   '号数
 
     '社員分更新
-    strUNM = Strings.UCase(GetUserNameString)
-    If strUNM = "SCOTT" Or strUNM = "TAKA" Or strUNM = "SIMO" Then
-        If strKBN = "TA" Or strKBN = "KA" Then
-            strDB = dbT
-        Else
-            strDB = dbK
-        End If
-    Else
-        Call Back_Menu
-        GoTo Exit_DB
-    End If
-    cnA.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" & strDB
+    strNT = "Initial Catalog=KYUYO;"
+    cnA.ConnectionString = MYPROVIDERE & MYSERVER & strNT & USER & PSWD 'SQLServer
     cnA.Open
+    Set Cmd.ActiveConnection = cnA
     lngR = 7
     Do
         If Cells(lngR, 2) = "" Then Exit Do
         strDel = StrConv(Left(Cells(lngR, 27), 1), vbUpperCase)  '削除ｷｰ
         strKey1 = StrConv(Left(Cells(lngR, 2), 2), vbUpperCase)  '事業所区分
         strKey2 = Format(Cells(lngR, 3), "00000")                '社員ｺｰﾄﾞ
-        lngTKY = Cells(lngR, 12)                                 '等級
-        lngGSU = Cells(lngR, 14)                                 '号数
+        lngTKY = Cells(lngR, 10)                                 '等級
+        lngGSU = Cells(lngR, 12)                                 '号数
         '本給表とチェック
         If Cells(lngR, 11) = "A" Then
-            strSQL = SQL4 & lngTKY & SQL5 & lngGSU & "))"
+            strSQL = ""
+            strSQL = strSQL & "SELECT * "
+            strSQL = strSQL & "       FROM KYUHYO"
+            strSQL = strSQL & "            WHERE CLASS = '" & lngTKY & "'"
+            strSQL = strSQL & "            AND ISSUE = '" & lngGSU & "'"
             rsT.Open strSQL, cnA, adOpenStatic, adLockPessimistic
-            If Cells(lngR, 17) = rsT.Fields("本給") And Cells(lngR, 18) = rsT.Fields("加給") Then
+            If Cells(lngR, 17) = rsT.Fields("PAY1") And Cells(lngR, 18) = rsT.Fields("PAY2") Then
             Else
                 MsgBox "本給あるいは加給が間違っています！" & vbCrLf & "＝＝＝ " & Cells(lngR, 4) & " ＝＝＝", vbCritical
             End If
-            rsT.Close
+            If rsT.State = adStateOpen Then rsT.Close
         End If
         
-        strSQL = SQL1 & strKey1 & SQL2 & strKey2 & SQL3
+        strSQL = ""
+        strSQL = strSQL & "SELECT * "
+        strSQL = strSQL & "       FROM KYUMTA"
+        strSQL = strSQL & "            WHERE KBN = '" & strKey1 & "'"
+        strSQL = strSQL & "            AND SCODE = '" & strKey2 & "'"
         rsA.Open strSQL, cnA, adOpenStatic, adLockPessimistic
         If strDel = "D" Then '削除する
             If rsA.EOF Then
                 strDel = ""
             Else
-                rsA.Delete
+                rsA.Fields(0) = "1"
             End If
         Else
-            '生年月日
-            If Cells(lngR, 7) = "" Then
-                strDAT1 = ""
-            Else
-                DateS = Cells(lngR, 7)
-                strDAT1 = Format(DateA, "yyyymmdd")
-                
-            End If
-            '入社年月日
-            If Cells(lngR, 10) = "" Then
-                strDAT1 = ""
-            Else
-                DateN = Cells(lngR, 10)
-                strDAT2 = Format(DateA, "yyyymmdd")
-            End If
             If rsA.EOF Then
                 'マスタに無ければ追加
                 rsA.AddNew
-                rsA.Fields(0) = strKey1
-                rsA.Fields(1) = strKey2
-                rsA.Fields(20) = 0
+                rsA.Fields("DATKB") = "1"
+                rsA.Fields("KBN") = strKey1
+                rsA.Fields("SCODE") = strKey2
+                rsA.Fields("HOUR") = 0
             End If
             If rsA.EOF Then
                 rsA.AddNew
-                rsA.Fields(0) = Cells(lngR, 2)
-                rsA.Fields(1) = Cells(lngR, 3)
+                rsA.Fields("KBN") = Cells(lngR, 2)
+                rsA.Fields("SCODE") = Cells(lngR, 3)
             Else
                 rsA.MoveFirst
             End If
-            rsA.Fields("社員名") = Cells(lngR, 4)
-            rsA.Fields("性別") = Cells(lngR, 6)
-            rsA.Fields("生年月日") = DateS
-            rsA.Fields("入社年月日") = DateN
-            rsA.Fields("社員種類") = Cells(lngR, 11)
-            rsA.Fields("等級") = Cells(lngR, 12)
-            rsA.Fields("号数") = Cells(lngR, 14)
-            rsA.Fields("管理職区") = Cells(lngR, 16)
-            For lngC = 9 To 15
-                If Cells(lngR, lngC + 8) = "" Then '本給->手当
+            rsA.Fields("SNAME") = Cells(lngR, 4)
+            rsA.Fields("SEX") = Cells(lngR, 5)
+            rsA.Fields("DATE1") = Cells(lngR, 7)
+            rsA.Fields("DATE2") = Cells(lngR, 8)
+            rsA.Fields("SKBN") = Cells(lngR, 9)
+            rsA.Fields("CLASS") = Cells(lngR, 10)
+            rsA.Fields("ISSUE") = Cells(lngR, 12)
+            rsA.Fields("MGR") = Cells(lngR, 14)
+            For lngC = 10 To 16
+                If Cells(lngR, lngC + 5) = "" Then '本給->手当
                     rsA.Fields(lngC) = 0
                 Else
-                    rsA.Fields(lngC) = Cells(lngR, lngC + 8)
+                    rsA.Fields(lngC) = Cells(lngR, lngC + 5)
                 End If
             Next lngC
-            rsA.Fields("印刷順序") = Cells(lngR, 25)
-            rsA.Fields("所属事業所") = Cells(lngR, 26)
-            rsA.Fields("役員就任日") = ""
-            rsA.Fields("パート時間給") = 0
-            rsA.Fields("パート所定時間数") = 0
-            If StrConv(rsA![社員種類], vbUpperCase) = "P" Then
-                rsA.Fields("パート時間給") = Cells(lngR, 17) / Cells(lngR, 29) '本給 / ﾊﾟｰﾄ所定時間
-                rsA.Fields("パート所定時間数") = Cells(lngR, 29) 'ﾊﾟｰﾄ所定時間
+            rsA.Fields("PRN") = Cells(lngR, 23)
+            rsA.Fields("OFFICE") = Cells(lngR, 24)
+            rsA.Fields("JIKYU") = 0
+            rsA.Fields("HOUR") = 0
+            If StrConv(rsA![SKBN], vbUpperCase) = "P" Then
+                rsA.Fields("JIKYU") = Cells(lngR, 15) / Cells(lngR, 27) '本給 / ﾊﾟｰﾄ所定時間
+                rsA.Fields("HOUR") = Cells(lngR, 27) 'ﾊﾟｰﾄ所定時間
             End If
             rsA.Update
         End If
         rsA.Close
         lngR = lngR + 1
-        If lngR = 55 Then lngR = 67
-        If lngR > 113 Then Exit Do
+        If lngR = 54 Then lngR = 66
+        If lngR > 112 Then Exit Do
     Loop
     
     MsgBox "更新しました！(*'ω'*)", vbInformation, "マスタ更新"
     
 Exit_DB:
-    cnA.Close
-    Set rsA = Nothing
-    Set cnA = Nothing
+
+    If Not rsT Is Nothing Then
+        If rsT.State = adStateOpen Then rsT.Close
+        Set rsT = Nothing
+    End If
+    If Not rsA Is Nothing Then
+        If rsA.State = adStateOpen Then rsA.Close
+        Set rsA = Nothing
+    End If
+    If Not cnA Is Nothing Then
+        If cnA.State = adStateOpen Then cnA.Close
+        Set cnA = Nothing
+    End If
     
 End Sub

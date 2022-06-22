@@ -35,76 +35,58 @@ Dim cnA    As New ADODB.Connection
 Dim rsA    As New ADODB.Recordset
 Dim Cmd    As New ADODB.Command
 Dim strSQL As String
-Dim strUNM As String
-Dim strDB  As String
+Dim strNT As String
 Dim lngR   As Long
-Dim lngC   As Long
-Dim P_Hant As String
-    
-    'ユーザ名が給与管理者の場合のみ処理する
-    strUNM = Strings.UCase(GetUserNameString)
-    If strUNM = "SCOTT" Or strUNM = "TAKA" Or strUNM = "SIMO" Then
-        '工場分は別DBｾｯﾄ
-        If strKBN = "TA" Or strKBN = "KA" Then
-            strDB = dbT
-        Else
-            strDB = dbK
-        End If
-    Else
-        Call Back_Menu
-        GoTo Exit_DB
-    End If
-    cnA.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" & strDB
-    cnA.Open
-    Set Cmd.ActiveConnection = cnA
     
     '社員分処理
     Call CLR_CELL          'ﾃﾞｰﾀｼｰﾄｸﾘｱ
-        
+    
+    strNT = "Initial Catalog=KYUYO;"
+    cnA.ConnectionString = MYPROVIDERE & MYSERVER & strNT & USER & PSWD 'SQLServer
+    cnA.Open
+    Set Cmd.ActiveConnection = cnA
+    strSQL = ""
     strSQL = strSQL & "SELECT *"
-    strSQL = strSQL & "     FROM グループ社員マスター"
-    strSQL = strSQL & "        WHERE 事業所区分 ='" & strKBN & "'"
-    strSQL = strSQL & "     ORDER BY 等級 DESC,"
-    strSQL = strSQL & "              号数 DESC,"
-    strSQL = strSQL & "              社員種類,"
-    strSQL = strSQL & "              社員コード"
+    strSQL = strSQL & "     FROM KYUMTA"
+    strSQL = strSQL & "        WHERE KBN ='" & strKBN & "'"
+    strSQL = strSQL & "        AND DATKB ='1'"
+    strSQL = strSQL & "     ORDER BY CLASS DESC,"
+    strSQL = strSQL & "              ISSUE DESC,"
+    strSQL = strSQL & "              SKBN,"
+    strSQL = strSQL & "              SCODE"
     Cmd.CommandText = strSQL
     Set rsA = Cmd.Execute
     If rsA.EOF = False Then rsA.MoveFirst
     'ｼｰﾄにﾃﾞｰﾀ貼り付け
     lngR = 7
     Do Until rsA.EOF
-        If Trim(rsA![管理職区] & "") <> "役員" Then '一般社員
-            Cells(lngR, 2) = rsA.Fields("事業所区分")
-            Cells(lngR, 3) = rsA.Fields("社員コード")
-            Cells(lngR, 4) = rsA.Fields("社員名")
-            If rsA.Fields("性別") = "男" Then
-                Cells(lngR, 5) = "M"
-            Else
-                Cells(lngR, 5) = "W"
-            End If
-            Cells(lngR, 7) = rsA.Fields("生年月日")
-            Cells(lngR, 10) = rsA.Fields("入社年月日")
-            Cells(lngR, 11) = rsA.Fields("社員種類")
-            Cells(lngR, 12) = rsA.Fields("等級")
-            Cells(lngR, 14) = rsA.Fields("号数")
-            Cells(lngR, 15) = 管理職区探索(rsA.Fields("管理職区") & "")
-            Cells(lngR, 17) = rsA.Fields("基本給１") '本給
-            Cells(lngR, 18) = rsA.Fields("基本給２") '加給
-            Cells(lngR, 19) = rsA.Fields("管理職手当")
-            Cells(lngR, 20) = rsA.Fields("家族手当")
-            Cells(lngR, 21) = rsA.Fields("大都市勤務手当")
-            Cells(lngR, 22) = rsA.Fields("調整手当") '業績手当
-            Cells(lngR, 23) = rsA.Fields("特殊作業手当")
-            Cells(lngR, 24) = "=SUM(RC[-7]:RC[-1])"
-            Cells(lngR, 25) = rsA.Fields("印刷順序")
-            Cells(lngR, 26) = rsA.Fields("所属事業所")
-            Cells(lngR, 29) = rsA.Fields("パート所定時間数")
+        If Trim(rsA![MGR] & "") <> "役員" Then '一般社員
+            Cells(lngR, 2) = rsA.Fields("KBN")
+            Cells(lngR, 3) = rsA.Fields("SCODE")
+            Cells(lngR, 4) = rsA.Fields("SNAME")
+            Cells(lngR, 5) = Trim(rsA.Fields("SEX"))
+            Cells(lngR, 7) = Format(rsA.Fields("DATE1"), "ggge年m月d日")
+            Cells(lngR, 8) = Format(rsA.Fields("DATE2"), "ggge年m月d日")
+            Cells(lngR, 9) = rsA.Fields("SKBN")
+            Cells(lngR, 10) = rsA.Fields("CLASS")
+            Cells(lngR, 12) = rsA.Fields("ISSUE")
+            Cells(lngR, 13) = 管理職区探索(Trim(rsA.Fields("MGR")) & "")
+            Cells(lngR, 15) = rsA.Fields("PAY1") '本給
+            Cells(lngR, 16) = rsA.Fields("PAY2") '加給
+            Cells(lngR, 17) = rsA.Fields("OPT1")
+            Cells(lngR, 18) = rsA.Fields("OPT2")
+            Cells(lngR, 19) = rsA.Fields("OPT3")
+            Cells(lngR, 20) = rsA.Fields("OPT4") '業績手当
+            Cells(lngR, 21) = rsA.Fields("OPT5")
+            Cells(lngR, 22) = "=SUM(RC[-7]:RC[-1])"
+            Cells(lngR, 23) = rsA.Fields("PRN")
+            Cells(lngR, 24) = rsA.Fields("OFFICE")
+            Cells(lngR, 27) = rsA.Fields("HOUR")
         End If
         rsA.MoveNext
         lngR = lngR + 1
-        If lngR = 55 Then lngR = 67
-        If lngR > 113 Then Exit Do
+        If lngR = 54 Then lngR = 66
+        If lngR > 112 Then Exit Do
     Loop
        
     Range("A2").Select
@@ -124,12 +106,10 @@ End Sub
 
 Sub CLR_CELL()
     '１枚目クリア
-    Range("B7:E53,G7:H53,J7:L53,N7:O53,Q7:W53,Y7:AA53,AC7:AC53").Select
-    Selection.ClearContents
-    Range("AG7:AR44").Select
+    Range("B7:E53,G7:J53,L7:M53,O7:U53,W7:Y53,AA7:AA53").Select
     Selection.ClearContents
     '２枚目クリア
-    Range("B67:E113,G67:H113,J67:L113,N67:O113,Q67:W113,Y67:AA113,AC67:AC113").Select
+    Range("B66:E112,G66:J112,L66:M112,O66:U112,W66:Y112,AA66:AA112").Select
     Selection.ClearContents
     Range("A1").Select
 End Sub

@@ -10,8 +10,16 @@ Option Explicit
 '2021/03/04 更新 ：takazawa
 '2022/05/13 更新 ：takazawa Git登録
 
-Public Const dbK = "\\192.168.128.4\hb\KYUYO\グループ賃金.accdb"
-Public Const dbT = "\\192.168.128.4\hb\ta\給与システム\グループ賃金.accdb"
+Public Const MYPROVIDERE = "Provider=SQLOLEDB;"
+'Public Const MYSERVER = "Data Source=192.168.128.9\SQLEXPRESS;"
+Public Const MYSERVER = "Data Source=HB14\SQLEXPRESS;"
+Public Const USER = "User ID=sa;"
+'Public Const PSWD = "Password=ALCadmin!;"
+Public Const PSWD = "Password=admin;"
+
+
+'Public Const dbK = "\\192.168.128.4\hb\KYUYO\グループ賃金.accdb"
+'Public Const dbT = "\\192.168.128.4\hb\ta\給与システム\グループ賃金.accdb"
 
 '=== API 関数宣言 ===
 #If VBA7 Then

@@ -6,7 +6,7 @@ Sub Set_KBN()
 Dim strKBN As String
 Dim Index  As Long
 
-    strKBN = Range("O2")
+    strKBN = Range("O2") '拠点番号
     For Index = 3 To 8
         If Cells(Index, 15) = strKBN Then
             Range("P2") = Cells(Index, 16)
@@ -15,52 +15,54 @@ Dim Index  As Long
             Exit For
         End If
     Next Index
-    
+
     Call Get_Masta(strKBN)
-    
+
 End Sub
 
 Sub Get_Masta(strKBN As String)
 
-Const SQL1 = "SELECT 事業所区分, 社員コード, 社員名, 社員種類, 等級, 基本給１, 基本給２, 管理職手当, 家族手当, 部門1, 部門2, 部門3, 部門名, 入社年月日 FROM グループ社員マスター WHERE (((事業所区分)='"
-Const SQL2 = "')) ORDER BY 社員コード"
-
 Dim cnA As New ADODB.Connection
 Dim rsA As New ADODB.Recordset
 Dim strSQL As String
+Dim strNT  As String
 Dim lngR   As Long
 Dim lngC   As Long
 Dim DateA  As Date
 Dim DateB  As Date
 Dim strYY  As String
 Dim lngMM  As Long
-Dim strUNM As String
-Dim strDB  As String
 
     Range("A4:J152").ClearContents
     Range("L4:L52").ClearContents
     Range("N4:N52").ClearContents
-    
-    strUNM = Strings.UCase(GetUserNameString)
-    If strUNM = "SCOTT" Or strUNM = "TAKA" Or strUNM = "SIMO" Then
-        If strKBN = "5" Or strKBN = "6" Then
-            strDB = dbT
-        Else
-            strDB = dbK
-        End If
-'    ElseIf strUNM = "SIMO" Then
-'        strDB = dbT
-    Else
-        Call Back_Menu
-        GoTo Exit_DB
-    End If
-    cnA.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" & strDB
+
+    strNT = "Initial Catalog=KYUYO;"
+    cnA.ConnectionString = MYPROVIDERE & MYSERVER & strNT & USER & PSWD 'SQLServer
     cnA.Open
-    
+
     '事業所区分ごと読込み
-    strKBN = Range("Q2")
     If strKBN = "" Then GoTo Exit_DB
-    strSQL = SQL1 & strKBN & SQL2
+    strKBN = Range("Q2")
+    strSQL = ""
+    strSQL = strSQL & "SELECT KBN,"
+    strSQL = strSQL & "       SCODE,"
+    strSQL = strSQL & "       SNAME,"
+    strSQL = strSQL & "       SKBN,"
+    strSQL = strSQL & "       CLASS,"
+    strSQL = strSQL & "       PAY1,"
+    strSQL = strSQL & "       PAY2,"
+    strSQL = strSQL & "       OPT1,"
+    strSQL = strSQL & "       OPT2,"
+    strSQL = strSQL & "       BMN1,"
+    strSQL = strSQL & "       BMN2,"
+    strSQL = strSQL & "       BMN3,"
+    strSQL = strSQL & "       BMNNM,"
+    strSQL = strSQL & "       DATE2"
+    strSQL = strSQL & "    FROM KYUMTA"
+    strSQL = strSQL & "         WHERE KBN = '" & strKBN & "'"
+    strSQL = strSQL & "         AND DATKB = '1'"
+    strSQL = strSQL & "    ORDER BY SCODE"
     rsA.Open strSQL, cnA, adOpenStatic, adLockReadOnly
 
     If rsA.EOF = False Then rsA.MoveFirst
@@ -71,11 +73,11 @@ Dim strDB  As String
             Cells(lngR, lngC + 1) = rsA.Fields(lngC)
         Next lngC
         '部門区分ｾｯﾄ
-        If IsNull(rsA.Fields("部門2")) = False Then Cells(lngR, 10) = rsA.Fields("部門2")
-        If IsNull(rsA.Fields("部門3")) = False Then Cells(lngR, 12) = rsA.Fields("部門3")
+        If IsNull(rsA.Fields("BMN2")) = False Then Cells(lngR, 10) = rsA.Fields("BMN2")
+        If IsNull(rsA.Fields("BMN3")) = False Then Cells(lngR, 12) = rsA.Fields("BMN3")
         '生年月日
-        If rsA.Fields("入社年月日") <> "" Then
-            DateA = rsA.Fields("入社年月日")
+        If rsA.Fields("DATE2") <> "" Then
+            DateA = rsA.Fields("DATE2")
         End If
         '新入社員判定処理
         strYY = Format(Now(), "yyyy")
@@ -98,13 +100,17 @@ Dim strDB  As String
         rsA.MoveNext
         lngR = lngR + 1
     Loop
-    
-Exit_DB:
-    rsA.Close
-    cnA.Close
 
-    Set rsA = Nothing
-    Set cnA = Nothing
+Exit_DB:
+
+    If Not rsA Is Nothing Then
+        If rsA.State = adStateOpen Then rsA.Close
+        Set rsA = Nothing
+    End If
+    If Not cnA Is Nothing Then
+        If cnA.State = adStateOpen Then cnA.Close
+        Set cnA = Nothing
+    End If
 
 End Sub
 
@@ -113,36 +119,20 @@ Sub Up_Masta()
 Const SQL1 = "SELECT 部門1, 部門2, 部門3, 部門名, 新入社員 FROM グループ社員マスター WHERE (((社員コード)='"
 Const SQL2 = "'))"
 
-
 Dim cnA As New ADODB.Connection
 Dim rsA As New ADODB.Recordset
 Dim strSQL As String
+Dim strNT  As String
 Dim strCD  As String
 Dim strKB1 As String
 Dim strKB2 As String
 Dim strKB3 As String
-Dim strUNM As String
-Dim strKBN As String
-Dim strDB  As String
 Dim lngR   As Long
-Dim lngC   As Long
-   
-    strKBN = Range("O2")
-    strUNM = Strings.UCase(GetUserNameString)
-    If strUNM = "SCOTT" Or strUNM = "TAKA" Or strUNM = "SIMO" Then
-        If strKBN = "5" Or strKBN = "6" Then
-            strDB = dbT
-        Else
-            strDB = dbK
-        End If
-'    ElseIf strUNM = "SIMO" Then
-'        strDB = dbT
-    Else
-        GoTo Exit_DB
-    End If
-    cnA.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0; Data Source=" & strDB
+
+    strNT = "Initial Catalog=KYUYO;"
+    cnA.ConnectionString = MYPROVIDERE & MYSERVER & strNT & USER & PSWD 'SQLServer
     cnA.Open
-    
+
     lngR = 4
     Do
         strCD = Cells(lngR, 2) '社員ｺｰﾄﾞ
@@ -152,7 +142,14 @@ Dim lngC   As Long
         strKB3 = Cells(lngR, 12)
         If strCD <> "" Then
             'ﾏｽﾀ呼出
-            strSQL = SQL1 & strCD & SQL2
+            strSQL = ""
+            strSQL = strSQL & "SELECT BMN1,"
+            strSQL = strSQL & "       BMN2,"
+            strSQL = strSQL & "       BMN3,"
+            strSQL = strSQL & "       BMNNM,"
+            strSQL = strSQL & "       YKBN"
+            strSQL = strSQL & "    FROM KYUMTA"
+            strSQL = strSQL & "         WHERE SCODE = '" & strCD & "'"
             rsA.Open strSQL, cnA, adOpenStatic, adLockPessimistic
             If rsA.EOF = False Then
                 rsA.MoveFirst
@@ -171,16 +168,18 @@ Dim lngC   As Long
         End If
         lngR = lngR + 1
     Loop
-    
+
     MsgBox "登録しました(^^♪", vbInformation, "マスタ登録"
+    
 Exit_DB:
 
-    '接続のクローズ
-    cnA.Close
-
-    'オブジェクトの破棄
-    Set rsA = Nothing
-    Set cnA = Nothing
-
+    If Not rsA Is Nothing Then
+        If rsA.State = adStateOpen Then rsA.Close
+        Set rsA = Nothing
+    End If
+    If Not cnA Is Nothing Then
+        If cnA.State = adStateOpen Then cnA.Close
+        Set cnA = Nothing
+    End If
+    
 End Sub
-

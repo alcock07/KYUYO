@@ -47,9 +47,9 @@ Attribute Print_OK.VB_ProcData.VB_Invoke_Func = " \n14"
     'ÇPï≈ñ⁄àÛç¸
     Range("A6:Z54").Interior.ColorIndex = xlNone
     If boolA Then
-        ActiveSheet.PageSetup.PrintArea = "$B$3:$AE$56"
+        ActiveSheet.PageSetup.PrintArea = "$B$3:$AE$54"
     Else
-        ActiveSheet.PageSetup.PrintArea = "$B$3:$Z$56"
+        ActiveSheet.PageSetup.PrintArea = "$B$3:$Z$54"
     End If
     If strPS = "A4" Then
         With ActiveSheet.PageSetup
@@ -67,9 +67,9 @@ Attribute Print_OK.VB_ProcData.VB_Invoke_Func = " \n14"
     'ÇQï≈ñ⁄àÛç¸
     If Range("B67").Value <> "" Then
         If boolA Then
-            ActiveSheet.PageSetup.PrintArea = "$B$63:$AE$115"
+            ActiveSheet.PageSetup.PrintArea = "$B$62:$AE$114"
         Else
-            ActiveSheet.PageSetup.PrintArea = "$B$63:$Z$115"
+            ActiveSheet.PageSetup.PrintArea = "$B$62:$Z$114"
         End If
        If strPS = "A4" Then
         With ActiveSheet.PageSetup
